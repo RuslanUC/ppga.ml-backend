@@ -15,8 +15,8 @@ services:
     ports:
       - '5050:5050'
     depends_on:
-      - database
-  db_admin:
+      - db
+  admin:
     environment:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
@@ -32,8 +32,8 @@ services:
     ports:
       - '5051:5051'
     depends_on:
-      - database
-  database:
+      - db
+  db:
     image: yobasystems/alpine-mariadb
     command: --default-authentication-plugin=mysql_native_password
     environment:
@@ -42,8 +42,8 @@ services:
       - MYSQL_PASSWORD=${DB_PASS}
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
     volumes:
-      - database-data:/var/lib/mysql
+      - db-data:/var/lib/mysql
 volumes:
-  database-data:
+  db-data:
     driver_opts:
       size: 1Gi
