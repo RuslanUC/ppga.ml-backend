@@ -7,7 +7,17 @@ from json import dumps as jdumps
 
 _re = compile('[^a-z0-9]+')
 
-app = Flask(__name__)
+class LinkShortenerApi(Flask):
+	def process_response(self, response):
+        super(LinkShortenerApi, self).process_response(response)
+        response.headers['Server'] = "BasaltMiner"
+        response.headers['Access-Control-Allow-Origin'] = "*"
+        response.headers['Access-Control-Allow-Headers'] = "*"
+        response.headers['Access-Control-Allow-Methods'] = "*"
+        response.headers['Content-Security-Policy'] = "connect-src *;"
+        return response
+
+app = LinkShortenerApi(__name__)
 
 app.config["DB_USER"] = environ.get("DB_USER")
 app.config["DB_HOST"] = environ.get("DB_HOST")
