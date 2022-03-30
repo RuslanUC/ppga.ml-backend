@@ -8,7 +8,7 @@ from json import dumps as jdumps
 _re = compile('[^a-z0-9]+')
 
 class LinkShortenerApi(Flask):
-	def process_response(self, response):
+    def process_response(self, response):
         super(LinkShortenerApi, self).process_response(response)
         response.headers['Server'] = "BasaltMiner"
         response.headers['Access-Control-Allow-Origin'] = "*"
