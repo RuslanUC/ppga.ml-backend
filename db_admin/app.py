@@ -52,10 +52,6 @@ def inject_tables_and_counts():
 	data = count_all(db.mysql)
 	return dict(tables_and_counts=data)
 
-@app.route("/debug")
-def debug():
-	return str(app.config)
-
 @app.route('/')
 @app.route('/index')
 @login_required
