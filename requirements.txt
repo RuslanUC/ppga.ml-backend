@@ -1,0 +1,6 @@
+# Databases
+mariadb
+sqlparse
+
+# Web
+flask

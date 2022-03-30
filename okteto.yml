@@ -1,0 +1,11 @@
+name: api
+command: bash
+volumes:
+- /root/.cache/pip
+sync:
+- .:/src
+forward:
+- 8080:8080
+- 3306:database:3306
+reverse:
+- 9000:9000

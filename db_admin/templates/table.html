@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<a class="btn btn-primary" href="/edit/{{ table_name }}/add/0">
+		<i class="glyphicon glyphicon-plus-sign"></i> Add New {{ table_name|capitalize }}
+	</a>
+	<h1>{{ table_name|capitalize }}</h1>
+	<p>This table includes {{ table_count }} {{ table_name }}</p>
+	<table id="sorted" class="table table-striped table-bordered">
+		<thead>
+			<tr>
+				{% for d in columns %}
+					<th>{{ d|capitalize }}</th>
+				{% endfor %}
+
+				<th>Edit</th>
+				<th>Delete</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for row_data in data %}
+			<tr>
+				{% for d in row_data %}
+					<td>{{ d }}</td>
+				{% endfor %}
+				<td>
+					<a href="/edit/{{ table_name }}/edit/{{ row_data[0] }}">
+						<i class="glyphicon glyphicon-edit"></i>
+					</a>
+				</td>
+				<td>
+					<a href="/save?table={{ table_name }}&act=delete&mod={{ columns[0] }}&mod_value={{ row_data[0] }}" onclick="return navConfirm(this.href);">
+					<i class="glyphicon glyphicon-trash"></i>
+					</a>
+					</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endblock %}
