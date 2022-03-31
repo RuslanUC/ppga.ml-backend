@@ -80,7 +80,8 @@ def read_code(code):
 @login_required("WRITE")
 def write_code(code):
 	code = _re.sub('', code)
-	url = request.form.get("url")
+	json = request.get_json(force=True)
+	url = json.get("url")
 	if not url:
 		return "url must be in form body", 400
 	with db.mysql.cursor() as cur:
