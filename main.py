@@ -5,7 +5,7 @@ from os import environ
 from re import compile
 from json import dumps as jdumps
 
-_re = compile('[^a-z0-9]+')
+_re = compile('[^a-zA-Z0-9]+')
 
 class LinkShortenerApi(Flask):
     def process_response(self, response):
