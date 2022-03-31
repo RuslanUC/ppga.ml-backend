@@ -69,11 +69,11 @@ def login_required(access):
 def read_code(code):
 	code = _re.sub('', code)
 	with db.mysql.cursor() as cur:
-		cur.execute(f"SELECT `url` FROM `links` WHERE `code`=\"{code}\"")
+		cur.execute(f"SELECT `url` FROM `links` WHERE `code`=\"{code}\";")
 		data = cur.fetchall()
 		if not data:
 			return abort(404)
-		cur.execute(f"UPDATE `links` SET `uses`=`uses`+1 WHERE `code`=\"code\"")
+		cur.execute(f"UPDATE `links` SET `uses`=`uses`+1 WHERE `code`=\"{code}\";")
 	return jdumps({"url": data[0][0]})
 
 @app.route('/write/<string:code>', methods=["POST"])
