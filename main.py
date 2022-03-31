@@ -55,11 +55,11 @@ def login_required(access):
 		@wraps(f)
 		def wrapped(*args, **kwargs):
 			if access not in ["READ", "WRITE"]:
-				return abort(500)
+				return jdumps({"success": False, "message": "Server does not configured correctly"}), 500
 			if "Authorization" not in request.headers:
-				return abort(401)
+				return jdumps({"success": False, "message": "Authorization header is empty"}), 401
 			if request.headers["Authorization"] != app.config[f"{access}_KEY"]:
-				return abort(403)
+				return jdumps({"success": False, "message": "Invalid api key"}), 403
 			return f(*args, **kwargs)
 		return wrapped
 	return _login_required
@@ -72,9 +72,9 @@ def read_code(code):
 		cur.execute(f"SELECT `url` FROM `links` WHERE `code`=\"{code}\";")
 		data = cur.fetchall()
 		if not data:
-			return abort(404)
+			return jdumps({"success": False, "message": "Code does not exist"}), 404
 		cur.execute(f"UPDATE `links` SET `uses`=`uses`+1 WHERE `code`=\"{code}\";")
-	return jdumps({"url": data[0][0]})
+	return jdumps({"success": True, "url": data[0][0]})
 
 @app.route('/write/<string:code>', methods=["POST"])
 @login_required("WRITE")
@@ -83,14 +83,14 @@ def write_code(code):
 	json = request.get_json(force=True)
 	url = json.get("url")
 	if not url:
-		return "url must be in form body", 400
+		return jdumps({"success": False, "message": "Url must be in request body"}), 400
 	with db.mysql.cursor() as cur:
 		cur.execute(f"SELECT `url` FROM `links` WHERE `code`=\"code\";")
 		data = cur.fetchall()
 		if data:
-			return "Row with this code exists", 400
+			return jdumps({"success": False, "message": "Row with this code exists"}), 400
 		cur.execute(f"INSERT INTO `links` (`code`, `url`) VALUES (\"{code}\", \"{url}\");")
-	return "ok"
+	return jdumps({"success": True})
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0", port=5050)
