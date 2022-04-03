@@ -1,5 +1,6 @@
 # Databases
 pymongo
+pymongo[srv]
 
 # Web
 flask
