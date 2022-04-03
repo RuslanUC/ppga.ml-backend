@@ -1,6 +1,5 @@
 # Databases
-mariadb
-sqlparse
+pymongo
 
 # Web
 flask

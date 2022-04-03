@@ -6,7 +6,6 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 WORKDIR /links
 
-RUN apk update && apk add python3-dev gcc libc-dev libffi-dev make build-base alpine-sdk mysql mysql-client mariadb-connector-c-dev
 RUN python -m pip install --upgrade pip && pip install --upgrade wheel setuptools
 
 COPY requirements.txt requirements.txt

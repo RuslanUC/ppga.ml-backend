@@ -2,48 +2,10 @@ version: '3'
 services:
   api:
     environment:
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
-      - DB_HOST=${DB_HOST}
-      - READ_KEY=${READ_KEY}
-      - WRITE_KEY=${WRITE_KEY}
+      - MONGODB=${MONGODB}
     build:
       target: python
       context: .
     command: python main.py
     ports:
       - '5050:5050'
-    depends_on:
-      - db
-  admin:
-    environment:
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
-      - DB_HOST=${DB_HOST}
-      - SECRET_KEY=${SECRET_KEY}
-      - ADMIN_LOGIN=${ADMIN_LOGIN}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-    build:
-      target: python
-      context: .
-    command: cd db_admin && python app.py
-    ports:
-      - '5051:5051'
-    depends_on:
-      - db
-  db:
-    image: yobasystems/alpine-mariadb
-    command: --default-authentication-plugin=mysql_native_password
-    environment:
-      - MYSQL_DATABASE=${DB_NAME}
-      - MYSQL_USER=${DB_USER}
-      - MYSQL_PASSWORD=${DB_PASS}
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
-    volumes:
-      - db-data:/var/lib/mysql
-volumes:
-  db-data:
-    driver_opts:
-      size: 1Gi

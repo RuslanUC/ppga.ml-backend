@@ -1,96 +1,78 @@
-from flask import Flask, request, abort
-from mariadb import connect, InterfaceError
+from flask import Flask, request
 from functools import wraps
 from os import environ
 from re import compile
 from json import dumps as jdumps
+from pymongo import MongoClient
+from random import choice
 
 _re = compile('[^a-zA-Z0-9]+')
 
 class LinkShortenerApi(Flask):
     def process_response(self, response):
         super(LinkShortenerApi, self).process_response(response)
-        response.headers['Server'] = "BasaltMiner"
         response.headers['Access-Control-Allow-Origin'] = "*"
         response.headers['Access-Control-Allow-Headers'] = "*"
         response.headers['Access-Control-Allow-Methods'] = "*"
-        response.headers['Content-Security-Policy'] = "connect-src *;"
         return response
 
+class ApiKey:
+    def __init__(self, id, key):
+        self.id = id
+        self.key = key
+
 app = LinkShortenerApi(__name__)
+conn = MongoClient(environ.get("MONGODB"))
+db = conn.files
+users_coll = db.users
+links_coll = db.links
 
-app.config["DB_USER"] = environ.get("DB_USER")
-app.config["DB_HOST"] = environ.get("DB_HOST")
-app.config["DB_PASS"] = environ.get("DB_PASS")
-app.config["DB_NAME"] = environ.get("DB_NAME")
-app.config["READ_KEY"] = environ.get("READ_KEY")
-app.config["WRITE_KEY"] = environ.get("WRITE_KEY")
+def auth_required(f):
+	@wraps(f)
+	def wrapped(*args, **kwargs):
+		apikey = request.headers.get("Authorization")
+		if not apikey:
+			return jdumps({"success": False, "message": "Invalid api key"}), 401
+		r = users_coll.find_one({"key": apikey})
+		if not r:
+			return jdumps({"success": False, "message": "Invalid api key"}), 401
+		kwargs["apikey"] = ApiKey(id=r["id"], key=apikey)
+		return f(*args, **kwargs)
+	return wrapped
 
-class Singleton(object):
-    _instances = {}
-    def __new__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            instance = super().__new__(cls)
-            cls._instances[cls] = instance
-        return cls._instances[cls]
-
-# MySQL
-class DataBase(Singleton):
-	_database = None
-
-	@property
-	def mysql(self):
-		if not self._database:
-			self._database = connect(host=app.config["DB_HOST"], port=3306, user=app.config["DB_USER"], password=app.config["DB_PASS"], database=app.config["DB_NAME"], autocommit=True)
-		try:
-			self._database.ping()
-		except InterfaceError:
-			self._database = connect(host=app.config["DB_HOST"], port=3306, user=app.config["DB_USER"], password=app.config["DB_PASS"], database=app.config["DB_NAME"], autocommit=True)
-		return self._database
-
-db = DataBase()
-
-def login_required(access):
-	def _login_required(f):
-		@wraps(f)
-		def wrapped(*args, **kwargs):
-			if access not in ["READ", "WRITE"]:
-				return jdumps({"success": False, "message": "Server does not configured correctly"}), 500
-			if "Authorization" not in request.headers:
-				return jdumps({"success": False, "message": "Authorization header is empty"}), 401
-			if request.headers["Authorization"] != app.config[f"{access}_KEY"]:
-				return jdumps({"success": False, "message": "Invalid api key"}), 403
-			return f(*args, **kwargs)
-		return wrapped
-	return _login_required
-
+@app.route('/r/<string:code>')
 @app.route('/read/<string:code>')
-@login_required("READ")
 def read_code(code):
 	code = _re.sub('', code)
-	with db.mysql.cursor() as cur:
-		cur.execute(f"SELECT `url` FROM `links` WHERE `code`=\"{code}\";")
-		data = cur.fetchall()
-		if not data:
-			return jdumps({"success": False, "message": "Code does not exist"}), 404
-		cur.execute(f"UPDATE `links` SET `uses`=`uses`+1 WHERE `code`=\"{code}\";")
-	return jdumps({"success": True, "url": data[0][0]})
+	r = links_coll.find_one({"code": code})
+	if not r:
+		return jdumps({"success": False, "message": "Code does not exist"}), 404
+	links_coll.update_one({"code": code}, {"$set": {"uses": r["uses"]+1}})
+	return jdumps({"success": True, "url": r["url"]})
 
+@app.route('/w/<string:code>', methods=["POST"])
 @app.route('/write/<string:code>', methods=["POST"])
-@login_required("WRITE")
-def write_code(code):
+@auth_required
+def write_code(apikey, code):
 	code = _re.sub('', code)
 	json = request.get_json(force=True)
 	url = json.get("url")
 	if not url:
 		return jdumps({"success": False, "message": "Url must be in request body"}), 400
-	with db.mysql.cursor() as cur:
-		cur.execute(f"SELECT `url` FROM `links` WHERE `code`=\"code\";")
-		data = cur.fetchall()
-		if data:
-			return jdumps({"success": False, "message": "Row with this code exists"}), 400
-		cur.execute(f"INSERT INTO `links` (`code`, `url`) VALUES (\"{code}\", \"{url}\");")
-	return jdumps({"success": True})
+	links_coll.insert_one({"code": code, "url": url, "author": apikey.id, "uses": 0})
+	return jdumps({"success": True, "code": code})
+
+@app.route('/r', methods=["POST"])
+@app.route('/random', methods=["POST"])
+@auth_required
+def write_random(apikey):
+	code = id = "".join([choice("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") for _ in range(choice([5, 6]))])
+	json = request.get_json(force=True)
+	url = json.get("url")
+	if not url:
+		return jdumps({"success": False, "message": "Url must be in request body"}), 400
+	links_coll.insert_one({"code": code, "url": url, "author": apikey.id, "uses": 0})
+	return jdumps({"success": True, "code": code})
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0", port=5050)
