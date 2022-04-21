@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pepega image upload</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="shortcut icon" href="/static/favicon.ico" />
+</head>
+<body>
+  <canvas id="background"></canvas>
+  <script src="/static/js/background.js"></script>
+  <div id="container">
+    <h1>Image upload</h1>
+    <form onsubmit="event.preventDefault(); upload();">
+        <input type="password" name="apikey" id="apikey" placeholder="Api Key" onfocus="this.type='text';" onblur="this.type='password';">
+        <input type="file" name="file" id="file">
+        <input type="submit">
+    </form>
+  </div>
+  <script src="/static/js/sweetalert2.js"></script>
+  <script src="/static/js/main.js"></script>
+</body>
+</html>

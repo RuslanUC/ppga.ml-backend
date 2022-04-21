@@ -1,3 +1,5 @@
 okteto-flask-env
 .pytest_cache
 .idea
+env*
+*.bat
