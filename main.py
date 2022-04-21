@@ -135,7 +135,7 @@ async def upload(apikey):
 @app.route("/<string:code>")
 @get_domain
 async def download_or_redirect(code, domain):
-    if domain == "i.ppga.ml"
+    if domain == "i.ppga.ml":
         r = await images_coll.find_one({"id": code})
         if not r:
             return abort(404)
