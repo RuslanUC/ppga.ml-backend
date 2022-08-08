@@ -51,6 +51,9 @@ def auth(f):
     async def wrapped(*args, **kwargs):
         if not (apikey := request.headers.get("Authorization")):
             return jdumps({"success": False, "message": "Invalid api key"}), 401
+        if apikey == "demo":
+            kwargs["apikey"] = ApiKey(id=0, key="demo")
+            return await f(*args, **kwargs)
         if not (r := await users_coll.find_one({"key": apikey})):
             return jdumps({"success": False, "message": "Invalid api key"}), 401
         kwargs["apikey"] = ApiKey(id=r["id"], key=apikey)
